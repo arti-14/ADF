@@ -31,6 +31,7 @@ dictionaries.
 from pathlib import Path
 import copy
 import os
+import getpass
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++
 #import non-standard python modules, including ADF
@@ -93,6 +94,9 @@ class AdfInfo(AdfConfig):
         if self.__mdtf_info is not None:
             self.expand_references(self.__mdtf_info)
         # End if
+
+        # Get the current system user
+        self.__user = getpass.getuser()
 
         # Check if inputs are of the correct type:
         # -------------------------------------------
@@ -376,6 +380,7 @@ class AdfInfo(AdfConfig):
 
                 #Grab case time series file location
                 input_ts_loc = Path(input_ts_locs[case_idx])
+                print(f"Checking existing time-series files in {input_ts_loc}")
 
                 #Get years from pre-made timeseries file(s)
                 found_syear, found_eyear = self.get_climo_yrs_from_ts(input_ts_loc, case_name)
@@ -567,6 +572,12 @@ class AdfInfo(AdfConfig):
         # -----------------------------------------
 
     #########
+
+    # Create property needed to return "user" name to user:
+    @property
+    def user(self):
+        """Return the "user" name if requested."""
+        return self.__user
 
     # Create property needed to return "compare_obs" logical to user:
     @property

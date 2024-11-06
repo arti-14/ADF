@@ -146,12 +146,27 @@ class AdfWeb(AdfObs):
             #Specify where CSS files will be stored:
             css_files_dir = website_dir / "templates"
 
+            #Add links to external packages (if applicable)
+            self.external_package_links = {}
+
+            #MDTF puts directory under case[0]
+            if self.get_mdtf_info('mdtf_run'):
+                syear = self.climo_yrs["syears"]
+                eyear = self.climo_yrs["eyears"]
+                mdtf_path = f"../mdtf/MDTF_{case_name}"
+                mdtf_path += f"_{syear[0]}_{eyear[0]}"
+                self.external_package_links['MDTF'] = mdtf_path
+            #End if
+            
             #Add all relevant paths to dictionary for specific case:
             self.__case_web_paths[case_name] = {'website_dir': website_dir,
                                                 'img_pages_dir': img_pages_dir,
                                                 'assets_dir': assets_dir,
                                                 'table_pages_dir': table_pages_dir,
                                                 'css_files_dir': css_files_dir}
+
+
+
         #End for
         #--------------------------------
 
@@ -171,6 +186,8 @@ class AdfWeb(AdfObs):
                                                    'css_files_dir': css_files_dir}
         #End if
 
+
+        
     #########
 
     # Create property needed to return "create_html" logical to user:
@@ -602,18 +619,16 @@ class AdfWeb(AdfObs):
 
                 #Check if the mean plot type page exists for this case (or for multi-case):
                 mean_table_file = table_pages_dir / "mean_tables.html"
-                if not mean_table_file.exists():
-                    #Construct mean_table.html
-                    mean_table_tmpl = jinenv.get_template('template_mean_tables.html')
-                    #Reuse the rend_kwarg_dict, but ignore certain keys
-                    #since all others are the same
-                    new_dict = {k: rend_kwarg_dict[k] for k in rend_kwarg_dict.keys() - {'table_name', 'table_html'}}
-                    mean_table_rndr = mean_table_tmpl.render(new_dict)
-                    #Write mean diagnostic tables HTML file:
-                    with open(mean_table_file, 'w', encoding='utf-8') as ofil:
-                        ofil.write(mean_table_rndr)
-                    #End with
-                #End if
+                #Construct mean_table.html
+                mean_table_tmpl = jinenv.get_template('template_mean_tables.html')
+                #Reuse the rend_kwarg_dict, but ignore certain keys
+                #since all others are the same
+                new_dict = {k: rend_kwarg_dict[k] for k in rend_kwarg_dict.keys() - {'table_name', 'table_html'}}
+                mean_table_rndr = mean_table_tmpl.render(new_dict)
+                #Write mean diagnostic tables HTML file:
+                with open(mean_table_file, 'w', encoding='utf-8') as ofil:
+                    ofil.write(mean_table_rndr)
+                #End with
             #End if (tables)
 
             else: #Plot image
@@ -691,16 +706,22 @@ class AdfWeb(AdfObs):
                 if ptype not in avail_plot_types:
                     avail_plot_types.append(plot_types)
 
+
+            # External packages that can be run through ADF
+            avail_external_packages = {'MDTF':'mdtf_html_path', 'CVDP':'cvdp_html_path'}
+            
             #Construct index.html
             index_title = "AMP Diagnostics Prototype"
             index_tmpl = jinenv.get_template('template_index.html')
             index_rndr = index_tmpl.render(title=index_title,
-                                            case_name=web_data.case,
+                                            case_name=case1,
                                             base_name=data_name,
                                             case_yrs=case_yrs,
                                             baseline_yrs=baseline_yrs,
                                             plot_types=plot_types,
-                                            avail_plot_types=avail_plot_types)
+                                            avail_plot_types=avail_plot_types,
+                                            avail_external_packages=avail_external_packages,
+                                            external_package_links=self.external_package_links)
 
             #Write Mean diagnostics index HTML file:
             with open(index_html_file, 'w', encoding='utf-8') as ofil:
